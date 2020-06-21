@@ -1,4 +1,4 @@
-FROM chillingsilence/digibyte-docker
+FROM ubuntu:focal
 USER digibyte
 WORKDIR /home/digibyte
 ARG USERNAME=user
@@ -15,6 +15,9 @@ ARG TESTRPC=14023
 
 # Set to 1 for running it in testnet mode
 ARG TESTNET=0
+
+# We need wget
+RUN apt-get update && apt-get install -y wget
 
 # Download the Core wallet from GitHub
 RUN wget -c https://github.com/DigiByte-Core/DigiByte/releases/download/v${VERSION}/digibyte-${VERSION}-${ARCH}-linux-gnu.tar.gz -O - | tar xz
@@ -33,17 +36,17 @@ EXPOSE 14023
 # Allow Testnet P2P comms
 EXPOSE 12026
 
-RUN cat <<EOF > ~/.digibyte/digibyte.conf
-server=1
-maxconnections=300
-rpcallowip=127.0.0.1
-daemon=1
-rpcuser=user
-rpcpassword=pass
-txindex=1
-# Uncomment below if you need Dandelion disabled for any reason but it is left on by default intentionally
-#disabledandelion=1
-testnet=${TESTNET}
+RUN cat <<EOF > ~/.digibyte/digibyte.conf\n\
+server=1\n\
+maxconnections=300\n\
+rpcallowip=127.0.0.1\n\
+daemon=1\n\
+rpcuser=user\n\
+rpcpassword=pass\n\
+txindex=1\n\
+# Uncomment below if you need Dandelion disabled for any reason but it is left on by default intentionally\n\
+#disabledandelion=1\n\
+testnet=${TESTNET}\n\
 EOF
 
 CMD /home/digibyte/digibyte-${VERSION}/bin/digibyted
