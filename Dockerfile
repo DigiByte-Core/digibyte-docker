@@ -17,6 +17,10 @@ ARG TESTRPC=14023
 # Set to 1 for running it in testnet mode
 ARG TESTNET=0
 
+# Do we want any blockchain pruning to take place? Set to 4096 for a 4GB blockchain prune.
+# Alternatively set size=1 to prune with RPC call 'pruneblockchainheight <height>'
+ARG PRUNESIZE=0
+
 # We need wget
 RUN apt-get update && apt-get install -y wget
 
@@ -39,12 +43,13 @@ EXPOSE 12026
 
 RUN echo -e "datadir=${ROOTDATADIR}/.digibyte/\n\
 server=1\n\
+prune=${PRUNESIZE}\n\
 maxconnections=300\n\
 rpcallowip=127.0.0.1\n\
 daemon=1\n\
 rpcuser=${RPCUSERNAME}\n\
 rpcpassword=$RPCPASSWORD}\n\
-txindex=1\n\
+txindex=0\n\
 # Uncomment below if you need Dandelion disabled for any reason but it is left on by default intentionally\n\
 #disabledandelion=1\n\
 testnet=${TESTNET}\n" > ${ROOTDATADIR}/.digibyte/digibyte.conf
