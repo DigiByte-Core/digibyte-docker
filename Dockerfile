@@ -1,8 +1,9 @@
-FROM chillingsilence/digibyte-docker
-USER digibyte
-WORKDIR /home/digibyte
-ARG USERNAME=user
-ARG PASSWORD=pass
+FROM ubuntu:focal
+USER root
+WORKDIR /data
+ARG ROOTDATADIR=/data
+ARG RPCUSERNAME=user
+ARG RPCPASSWORD=pass
 ARG VERSION=7.17.2
 ARG ARCH=x86_64
 # Enable below for ARM CPU such as RPi etc or certain Synology NAS systems
@@ -16,10 +17,13 @@ ARG TESTRPC=14023
 # Set to 1 for running it in testnet mode
 ARG TESTNET=0
 
+# We need wget
+RUN apt-get update && apt-get install -y wget
+
 # Download the Core wallet from GitHub
 RUN wget -c https://github.com/DigiByte-Core/DigiByte/releases/download/v${VERSION}/digibyte-${VERSION}-${ARCH}-linux-gnu.tar.gz -O - | tar xz
-RUN mkdir -vp /home/digibyte/.digibyte
-VOLUME /home/digibyte/.digibyte
+RUN mkdir -vp ${ROOTDATADIR}/.digibyte
+VOLUME ${ROOTDATADIR}/.digibyte
 
 # Allow Mainnet P2P comms
 EXPOSE 12024
@@ -33,17 +37,20 @@ EXPOSE 14023
 # Allow Testnet P2P comms
 EXPOSE 12026
 
-RUN cat <<EOF > ~/.digibyte/digibyte.conf
-server=1
-maxconnections=300
-rpcallowip=127.0.0.1
-daemon=1
-rpcuser=user
-rpcpassword=pass
-txindex=1
-# Uncomment below if you need Dandelion disabled for any reason but it is left on by default intentionally
-#disabledandelion=1
-testnet=${TESTNET}
-EOF
+RUN echo -e "datadir=${ROOTDATADIR}/.digibyte/\n\
+server=1\n\
+maxconnections=300\n\
+rpcallowip=127.0.0.1\n\
+daemon=1\n\
+rpcuser=${RPCUSERNAME}\n\
+rpcpassword=$RPCPASSWORD}\n\
+txindex=1\n\
+# Uncomment below if you need Dandelion disabled for any reason but it is left on by default intentionally\n\
+#disabledandelion=1\n\
+testnet=${TESTNET}\n" > ${ROOTDATADIR}/.digibyte/digibyte.conf
 
-CMD /home/digibyte/digibyte-${VERSION}/bin/digibyted
+# Create symlinks
+RUN ln -s ${ROOTDATADIR}/digibyte-${VERSION}/bin/digibyted /usr/bin/digibyted
+RUN ln -s ${ROOTDATADIR}/digibyte-${VERSION}/bin/digibyte-cli /usr/bin/digibyte-cli
+
+CMD /usr/bin/digibyted
